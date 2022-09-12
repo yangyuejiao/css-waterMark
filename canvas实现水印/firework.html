@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type='text/css' href="css/bootstrap.min.css" />
+    <title>fireWork</title>
+    <style>
+    </style>
+</head>
+
+<body>
+    <canvas id="firecanvas"></canvas>
+</body>
+
+</html>
+<script>
+    //      创建一些全局变量
+    //创建一块画布
+    var imgObj = new Image();
+    let canvas = document.getElementById('firecanvas'),
+        ctx = canvas.getContext('2d'),
+        //获取屏幕的宽度和高度
+        cw = window.innerWidth,
+        ch = window.innerHeight,
+        //保存烟花的数组
+        fireworks = [],
+        //保存烟花颗粒的数组
+        particles = [],
+        //后面画图是会用到hsl模式 颜色的初始值,
+        pictures=[],
+        //保存图片的值
+        flag=2,
+        hue = 80,
+        //记录鼠标的坐标
+        mx, my,
+        limiterNow = 0,
+        limiterTotal = 100;
+    //画笔的长和宽设置为屏幕的长和宽
+    canvas.width = cw;
+    canvas.height = ch;
+    //基本上的全局变量,后面用到在写
+    //写几个辅助函数
+    function random(min, max) {
+        //返回给定区间的随机数,方便后面随机数的产生
+        return Math.random() * (max - min) + min;
+    }
+    function calculateDistance(p1x, p1y, p2x, p2y) {
+        var xDistance = p1x - p2x,
+            yDistance = p1y - p2y;
+        //初中学过的求解两点间的距离公式
+        //Math.sqrt
+        // Math.pow
+        return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2))
+    }
+    //=====基本工作准备完，，开始写我们的烟花对象
+    //=====采用原型链的方式进行对象的创建
+    // Firework class
+    //创建对象需要传入烟花的开始和结束坐标
+    function Firework(sx, sy, tx, ty) {
+        //烟花当前的位置
+        this.x = sx;
+        this.y = sy;
+        //烟花开始坐标
+        this.sx = sx;
+        this.sy = sy;
+        //烟花目的坐标
+        this.tx = tx;
+        this.ty = ty;
+        //烟花当前距离目的地的距离
+        this.distanceToTarget = calculateDistance(sx, sy, tx, ty);
+        //烟花已经走过的路程
+        this.distanceTraveled = 0;
+        // Math.atan2????
+        //利用反三角函数计算烟花的倾斜角
+        this.angle = Math.atan2(ty - sy, tx - sx);
+        //烟花的基本速度
+        this.speed = 2;
+        //烟花上升的加速，会有一定加速的效果
+        this.acceleration = 1.05;
+        //随机一个烟花的亮度,后面绘制时会用到
+        this.brightness = random(50, 70);
+        //烟花到达目的地后小圆圈的半径
+        this.targetRadius = 1;
+        //我们把烟花升空的过程分成3段来绘制
+        this.coordinateCount = 3;
+        this.coordinates = []
+        //用烟花初始化烟花位置数组
+        while (this.coordinateCount--) {
+            this.coordinates.push([this.x, this.y])
+        }
+
+    }
+    // 使用H5のcanvas API在屏幕上进行绘图
+    Firework.prototype.draw = function () {
+        //开始一条路径
+        ctx.beginPath();
+        //利用这两个函数来画以条线,起点是上一个坐标位置,终点是当前烟花移动后的位置
+        ctx.lineWidth = 6;
+        ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1])
+        ctx.lineTo(this.x, this.y);
+        //对变量进行拼接
+        ctx.strokeStyle = `hsl(${hue},80%,${this.brightness}%)`
+        ctx.stroke();
+        //绘制出一条线了
+        //把小圆圈画上
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.arc(this.tx, this.ty, this.targetRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+
+    }
+    //对烟花的位置数据进行更新
+    Firework.prototype.update = function (index) {
+        //现在开始更新烟花的位置数据
+        //首先我们要移除坐标数组中的最后一个坐标,然后把上一个位置插入到数组的最前面
+        this.coordinates.pop();
+        this.coordinates.unshift([this.x, this.y])
+        //更新小圆点数据
+        if (this.targetRadius < 8) {
+            this.targetRadius += 0.3;
+        } else {
+            this.targetRadius = 1
+        }
+        this.speed = this.speed * this.acceleration;
+        //把速度提升一下,这样产生一个加速效果
+        // this.speed *= this.acceleration;
+        //利用三角函数计算出横纵坐标的偏移量
+        let vx = Math.cos(this.angle) * this.speed,
+            vy = Math.sin(this.angle) * this.speed;
+
+        //先计算出烟花已经走过的路程
+        this.distanceTraveled = calculateDistance(this.sx, this.sy,
+            this.x + vx, this.y + vy);
+        //如果数烟花已经走到了终点,那么我们把这些烟花进行销毁,并让烟花爆炸
+        if (this.distanceTraveled >= this.distanceToTarget) {
+            fireworks.splice(index, 1, 0)
+            //这里先模拟 后面再写烟花爆炸
+            if(flag===23){
+                flag=2;
+            }else if(flag<23 && flag>=2){
+                flag++
+            }
+            ctx.lineWidth = 3;
+            createPicture(this.tx,this.ty)
+            createParticle(this.tx, this.ty)
+            
+            //如果没有走到终点我们继续往前走
+        } else {
+
+            //更新烟花的位置
+            this.x += vx;
+            this.y += vy;
+        }
+
+        //这样写烟花不能自动销毁 导致cpu 占有率急剧升高
+    }
+    //开始写烟花爆炸
+    function Particles(x, y) {
+        //大部分的变量和烟花对象差不多
+        //当前坐标
+        this.x = x;
+        this.y = y;
+        //角度
+        this.angle = random(0, Math.PI * 2);
+        //速度
+        this.speed = random(1, 10)
+        //摩擦系数
+        this.friction = 0.95;
+        //重力加速度
+        this.gravity = 1;
+        //hsl灰度值 随机一个
+        this.hue = random(hue - 20, hue + 20);
+        //亮度
+        this.brightness = random(50, 80);
+        //透明度
+        this.alpha = 1;
+        //亮度的衰变率
+        this.decay = random(0.015, 0.03)
+        this.coordinatCount = 5;
+        this.coordinates = [];
+        while (this.coordinatCount--) {
+            this.coordinates.push([this.x, this.y])
+        }
+    }
+    Particles.prototype.draw = function () {
+        ctx.beginPath();
+        ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1])
+        ctx.lineTo(this.x, this.y)
+        ctx.strokeStyle = 'hsla(' + hue + ',100%,' + this.brightness + '%,' + this.alpha + ')';
+        ctx.stroke();
+    }
+    Particles.prototype.update = function (index) {
+        this.coordinates.pop()
+        this.coordinates.unshift([this.x, this.y])
+        //增加摩擦力,让粒子跌落的速度变慢
+        this.speed *= this.friction;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed + this.gravity;
+        //让透明度不断变小
+        this.alpha -= this.decay;
+        //透明度低于decay,肉眼看不到这时我们将销毁
+        if (this.alpha <= this.decay) {
+            particles.splice(index, 1)
+        }
+    }
+    //写一个创建烟花爆炸的效果函数
+    function createParticle(x, y) {
+        let partcleCount = 100;
+        while (partcleCount--) {
+            particles.push(new Particles(x, y))
+        }
+    }
+    function Picture(x,y){
+         this.x=x;
+         this.y=y;
+         //透明度
+        this.alpha = 1;
+        //亮度的衰变率
+        this.decay = random(0.015, 0.03)
+         //速度
+         this.speed = 0.3
+        //摩擦系数
+        this.friction = 0.95;
+        imgObj.src=`./image/img${flag}.jpg`;
+        this.imgW=10;
+        this.imgH=10;
+    }
+    Picture.prototype.draw = function () {
+        ctx.beginPath();
+        ctx.drawImage(imgObj,this.x-(this.imgW/2),this.y-(this.imgH/2),this.imgW,this.imgH)
+        ctx.stroke();
+    }
+    Picture.prototype.update = function (index) {
+        //让透明度不断变小
+        let vw=this.imgW*this.speed,
+            vh=this.imgH*this.speed;
+        if(this.imgW<=imgObj.width/4){
+            this.imgW+=vw;
+            this.imgH+=vh
+        }
+        this.alpha -= this.decay;
+       
+        //透明度低于decay,肉眼看不到这时我们将销毁
+        if (this.alpha <= this.decay) {
+            pictures.splice(index, 1)
+        }
+    }
+    function createPicture(x,y){
+        pictures.push(new Picture(x,y))
+    }
+    function run() {
+        hue++
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0, 0, cw, ch);
+        var i = fireworks.length;
+        while (i--) {
+            if (!fireworks[i] == 0) {
+                fireworks[i].draw();
+                fireworks[i].update(i);
+            }
+        }
+        var p = particles.length;
+        while (p--) {
+            if (!particles[p] == 0) {
+                particles[p].draw();
+                particles[p].update(p);
+            }
+        }
+        var ps=pictures.length;
+        while(ps--){
+            if(!pictures[ps]==0){
+                pictures[ps].draw();
+                pictures[ps].update(ps);
+            }
+        }
+        //写好一个小算法,让烟花自动产生
+        if (limiterNow >= limiterTotal) {
+            fireworks.push(new Firework(random(0, cw), random(ch - 100, ch), random(80, cw-180), random(80, ch / 2)))
+            limiterNow = 0;
+        } else {
+            limiterNow++;
+        }
+
+    }
+    canvas.addEventListener('mousedown', function (e) {
+            if(flag>=10){
+                flag--;
+            }else if(flag<10 && flag>=0){
+                flag++
+            }
+            createPicture(e.clientX,e.clientY)
+           createParticle(e.clientX,e.clientY) 
+
+    })
+    setInterval(run, 20) 
+</script>

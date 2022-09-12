@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body id="waterWapper">
+    <canvas id="canvas">
+    </canvas>
+    <div>程月嘉</div>
+</body>
+</html>
+<script>
+    function drawWater() {
+        const canvas = document.getElementById('canvas')
+        canvas.width = 200;
+        canvas.heigh = 300;
+        canvas.style.display = 'none';
+        cxs = canvas.getContext('2d');
+        cxs.font = '16px Microsoft JhengHei';
+        cxs.fillStyle = 'rgba(239,159,226,1)'
+        cxs.rotate(-0.3)
+        cxs.fillText('程月嘉', canvas.width / 8, canvas.heigh / 8);
+        const img = canvas.toDataURL('img/png');
+        const style = `background-image:url(${img})`;
+        waterWapper.setAttribute('style', style)
+    }
+    drawWater();
+    // function callback() { 
+    //     console.log('   2345',1231)
+    //     drawWater()
+    //  };
+    const observe = new MutationObserver(drawWater);
+    const trage=waterWapper;
+    const option= { attributes: true }
+    observe.observe(trage,option);
+
+</script>
