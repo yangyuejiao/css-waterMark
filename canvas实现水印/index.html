@@ -5,13 +5,42 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>程月嘉专属前端笔记</title>
 </head>
+<style>
+    #waterWapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #b238d6;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+    #mainContent{
+      width: 80%;
+      height: 90%;
+      padding: 10px;
+      background: #f9dbf4;    
+    }
+    a{
+        display: inline-block;
+        margin-bottom: 10px;
+        text-decoration: none;
+       
+    }
+    a:hover{
+            color: #ffffff;
+    }
+</style>
 
 <body id="waterWapper">
-    <canvas id="canvas">
-    </canvas>
-    <div>程月嘉</div>
+    <div id="mainContent">
+        <canvas id="canvas">
+        </canvas>
+        <h1>程月嘉</h1>
+        <h2>2022.09.13 1.今天学习了git的安装</h2>
+        <a target="_blank" href="https://zhuanlan.zhihu.com/p/443527549">Git下载安装教程：git安装步骤手把手图文【超详细】</a><br>
+        <a target="_blank" href="https://www.runoob.com/w3cnote/html5-canvas-intro.html">学习 HTML5 Canvas 这一篇文章就够了</a>
+    </div>
 </body>
 </html>
 <script>
@@ -30,13 +59,8 @@
         waterWapper.setAttribute('style', style)
     }
     drawWater();
-    // function callback() { 
-    //     console.log('   2345',1231)
-    //     drawWater()
-    //  };
     const observe = new MutationObserver(drawWater);
-    const trage=waterWapper;
-    const option= { attributes: true }
-    observe.observe(trage,option);
-
+    const trage = waterWapper;
+    const option = { attributes: true }
+    observe.observe(trage, option);
 </script>
